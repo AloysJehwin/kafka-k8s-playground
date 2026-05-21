@@ -1,0 +1,53 @@
+global:
+  imagePullPolicy: IfNotPresent
+  kafkaBootstrap: eventflow-kafka-kafka-bootstrap.eventflow.svc:9092
+  schemaRegistryUrl: http://schema-registry.eventflow.svc:8081
+
+services:
+  order:
+    enabled: true
+    image: eventflow/order-service
+    tag: 0.1.0
+    replicas: 2
+    port: 8080
+    resources:
+      requests: { memory: 512Mi, cpu: 250m }
+      limits:   { memory: 1Gi,   cpu: 1000m }
+
+  payment:
+    enabled: true
+    image: eventflow/payment-service
+    tag: 0.1.0
+    replicas: 2
+    port: 8081
+    resources:
+      requests: { memory: 512Mi, cpu: 250m }
+      limits:   { memory: 1Gi,   cpu: 1000m }
+
+  inventory:
+    enabled: true
+    image: eventflow/inventory-service
+    tag: 0.1.0
+    replicas: 2
+    port: 8082
+    stateful: true
+    storageSize: 5Gi
+    resources:
+      requests: { memory: 1Gi, cpu: 500m }
+      limits:   { memory: 2Gi, cpu: 2000m }
+
+  notification:
+    enabled: true
+    image: eventflow/notification-service
+    tag: 0.1.0
+    replicas: 2
+    port: 8083
+    resources:
+      requests: { memory: 384Mi, cpu: 200m }
+      limits:   { memory: 768Mi, cpu: 500m }
+
+postgres:
+  username: eventflow
+  password: eventflow
+  database: orders
+  storageSize: 5Gi

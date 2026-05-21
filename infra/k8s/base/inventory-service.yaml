@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: inventory-service
+  namespace: eventflow
+spec:
+  serviceName: inventory-service
+  replicas: 2
+  selector: { matchLabels: { app: inventory-service } }
+  template:
+    metadata:
+      labels: { app: inventory-service }
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8082"
+        prometheus.io/path: "/actuator/prometheus"
+    spec:
+      containers:
+        - name: inventory-service
+          image: eventflow/inventory-service:0.1.0
+          ports: [{ containerPort: 8082, name: http }]
+          env:
+            - name: KAFKA_BOOTSTRAP
+              value: eventflow-kafka-kafka-bootstrap.eventflow.svc:9092
+            - name: SCHEMA_REGISTRY_URL
+              value: http://schema-registry.eventflow.svc:8081
+            - name: JAVA_TOOL_OPTIONS
+              value: "-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0"
+          volumeMounts:
+            - name: state
+              mountPath: /tmp/kafka-streams
+          resources:
+            requests: { memory: 1Gi, cpu: 500m }
+            limits: { memory: 2Gi, cpu: 2000m }
+          livenessProbe:
+            httpGet: { path: /actuator/health/liveness, port: http }
+            initialDelaySeconds: 60
+          readinessProbe:
+            httpGet: { path: /actuator/health/readiness, port: http }
+            initialDelaySeconds: 30
+  volumeClaimTemplates:
+    - metadata: { name: state }
+      spec:
+        accessModes: [ReadWriteOnce]
+        resources: { requests: { storage: 5Gi } }
+---
+apiVersion: v1
+kind: Service
+metadata: { name: inventory-service, namespace: eventflow }
+spec:
+  clusterIP: None
+  selector: { app: inventory-service }
+  ports: [{ port: 80, targetPort: 8082 }]

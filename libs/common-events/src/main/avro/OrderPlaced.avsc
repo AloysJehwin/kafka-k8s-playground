@@ -1,0 +1,16 @@
+{
+  "namespace": "com.eventflow.events",
+  "type": "record",
+  "name": "OrderPlaced",
+  "doc": "Emitted by order-service when an order is accepted",
+  "fields": [
+    {"name": "orderId", "type": "string"},
+    {"name": "customerId", "type": "string"},
+    {"name": "productId", "type": "string"},
+    {"name": "quantity", "type": "int"},
+    {"name": "amount", "type": {"type": "bytes", "logicalType": "decimal", "precision": 12, "scale": 2}},
+    {"name": "currency", "type": "string", "default": "USD"},
+    {"name": "placedAt", "type": {"type": "long", "logicalType": "timestamp-millis"}},
+    {"name": "correlationId", "type": "string"}
+  ]
+}

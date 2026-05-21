@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: payment-service
+  namespace: eventflow
+spec:
+  replicas: 2
+  selector: { matchLabels: { app: payment-service } }
+  template:
+    metadata:
+      labels: { app: payment-service }
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8081"
+        prometheus.io/path: "/actuator/prometheus"
+    spec:
+      containers:
+        - name: payment-service
+          image: eventflow/payment-service:0.1.0
+          ports: [{ containerPort: 8081, name: http }]
+          env:
+            - name: KAFKA_BOOTSTRAP
+              value: eventflow-kafka-kafka-bootstrap.eventflow.svc:9092
+            - name: SCHEMA_REGISTRY_URL
+              value: http://schema-registry.eventflow.svc:8081
+            - name: JAVA_TOOL_OPTIONS
+              value: "-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0"
+          resources:
+            requests: { memory: 512Mi, cpu: 250m }
+            limits: { memory: 1Gi, cpu: 1000m }
+          livenessProbe:
+            httpGet: { path: /actuator/health/liveness, port: http }
+            initialDelaySeconds: 60
+          readinessProbe:
+            httpGet: { path: /actuator/health/readiness, port: http }
+            initialDelaySeconds: 20
+---
+apiVersion: v1
+kind: Service
+metadata: { name: payment-service, namespace: eventflow }
+spec:
+  selector: { app: payment-service }
+  ports: [{ port: 80, targetPort: 8081 }]

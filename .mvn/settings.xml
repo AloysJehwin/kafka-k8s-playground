@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Project-local Maven settings.
+  Overrides ~/.m2/settings.xml so this repo builds against Maven Central
+  even when the user's global config points at internal mirrors.
+
+  Usage: the included ../mvnw is patched (via .mvn/maven.config) to pass
+  -s .mvn/settings.xml automatically. If using `mvn` directly, run:
+      mvn -s .mvn/settings.xml <goals>
+-->
+<settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0
+                              https://maven.apache.org/xsd/settings-1.0.0.xsd">
+
+  <localRepository>${user.home}/.m2/repository</localRepository>
+
+  <!--
+    No <mirrors> on purpose — let each <repository> resolve to its real URL.
+    This is what allows the Confluent repo (declared in pom.xml) to work
+    alongside Maven Central without being redirected to an internal mirror.
+  -->
+
+  <profiles>
+    <profile>
+      <id>default-public-repos</id>
+      <repositories>
+        <repository>
+          <id>central</id>
+          <url>https://repo.maven.apache.org/maven2</url>
+          <releases><enabled>true</enabled></releases>
+          <snapshots><enabled>false</enabled></snapshots>
+        </repository>
+        <repository>
+          <id>confluent</id>
+          <url>https://packages.confluent.io/maven/</url>
+          <releases><enabled>true</enabled></releases>
+          <snapshots><enabled>false</enabled></snapshots>
+        </repository>
+      </repositories>
+      <pluginRepositories>
+        <pluginRepository>
+          <id>central</id>
+          <url>https://repo.maven.apache.org/maven2</url>
+          <releases><enabled>true</enabled></releases>
+          <snapshots><enabled>false</enabled></snapshots>
+        </pluginRepository>
+      </pluginRepositories>
+    </profile>
+  </profiles>
+
+  <activeProfiles>
+    <activeProfile>default-public-repos</activeProfile>
+  </activeProfiles>
+</settings>

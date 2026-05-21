@@ -1,0 +1,94 @@
+# Strimzi Kafka cluster — install Strimzi operator first:
+# kubectl create -f 'https://strimzi.io/install/latest?namespace=eventflow' -n eventflow
+apiVersion: kafka.strimzi.io/v1beta2
+kind: Kafka
+metadata:
+  name: eventflow-kafka
+  namespace: eventflow
+spec:
+  kafka:
+    version: 3.8.0
+    replicas: 3
+    listeners:
+      - name: plain
+        port: 9092
+        type: internal
+        tls: false
+      - name: tls
+        port: 9093
+        type: internal
+        tls: true
+    config:
+      offsets.topic.replication.factor: 3
+      transaction.state.log.replication.factor: 3
+      transaction.state.log.min.isr: 2
+      default.replication.factor: 3
+      min.insync.replicas: 2
+      inter.broker.protocol.version: "3.8"
+    storage:
+      type: persistent-claim
+      size: 10Gi
+      deleteClaim: false
+    resources:
+      requests:
+        memory: 1Gi
+        cpu: 500m
+      limits:
+        memory: 2Gi
+        cpu: 1000m
+  zookeeper:
+    replicas: 3
+    storage:
+      type: persistent-claim
+      size: 5Gi
+      deleteClaim: false
+  entityOperator:
+    topicOperator: {}
+    userOperator: {}
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: orders.placed
+  namespace: eventflow
+  labels:
+    strimzi.io/cluster: eventflow-kafka
+spec:
+  partitions: 6
+  replicas: 3
+  config:
+    retention.ms: 604800000  # 7 days
+    cleanup.policy: delete
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: payments.processed
+  namespace: eventflow
+  labels:
+    strimzi.io/cluster: eventflow-kafka
+spec:
+  partitions: 6
+  replicas: 3
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: inventory.reserved
+  namespace: eventflow
+  labels:
+    strimzi.io/cluster: eventflow-kafka
+spec:
+  partitions: 6
+  replicas: 3
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: orders.completed
+  namespace: eventflow
+  labels:
+    strimzi.io/cluster: eventflow-kafka
+spec:
+  partitions: 6
+  replicas: 3

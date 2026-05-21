@@ -1,0 +1,12 @@
+{
+  "namespace": "com.eventflow.events",
+  "type": "record",
+  "name": "OrderCompleted",
+  "fields": [
+    {"name": "orderId", "type": "string"},
+    {"name": "status", "type": {"type": "enum", "name": "OrderStatus", "symbols": ["CONFIRMED", "REJECTED"]}},
+    {"name": "reason", "type": ["null", "string"], "default": null},
+    {"name": "completedAt", "type": {"type": "long", "logicalType": "timestamp-millis"}},
+    {"name": "correlationId", "type": "string"}
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "namespace": "com.eventflow.events",
+  "type": "record",
+  "name": "InventoryReserved",
+  "fields": [
+    {"name": "orderId", "type": "string"},
+    {"name": "productId", "type": "string"},
+    {"name": "quantity", "type": "int"},
+    {"name": "status", "type": {"type": "enum", "name": "InventoryStatus", "symbols": ["RESERVED", "OUT_OF_STOCK"]}},
+    {"name": "reservedAt", "type": {"type": "long", "logicalType": "timestamp-millis"}},
+    {"name": "correlationId", "type": "string"}
+  ]
+}

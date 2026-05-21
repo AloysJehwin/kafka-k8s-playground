@@ -1,0 +1,7 @@
+apiVersion: v2
+name: eventflow
+description: Event-driven order processing platform on Kafka + Kubernetes
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+keywords: [kafka, spring-boot, event-driven, microservices]

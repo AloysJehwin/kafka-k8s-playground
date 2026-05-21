@@ -1,0 +1,7 @@
+{{- include "eventflow.service" (dict "name" "order"        "svc" .Values.services.order        "ctx" .) }}
+---
+{{- include "eventflow.service" (dict "name" "payment"      "svc" .Values.services.payment      "ctx" .) }}
+---
+{{- include "eventflow.service" (dict "name" "inventory"    "svc" .Values.services.inventory    "ctx" .) }}
+---
+{{- include "eventflow.service" (dict "name" "notification" "svc" .Values.services.notification "ctx" .) }}

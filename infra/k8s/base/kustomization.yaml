@@ -14,6 +14,8 @@ resources:
   - networkpolicy.yaml
   - web-bff.yaml
   - secrets.yaml
+  - api-gateway.yaml
+  - tenant-service.yaml
 
 commonLabels:
   app.kubernetes.io/part-of: eventflow

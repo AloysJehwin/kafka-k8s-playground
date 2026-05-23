@@ -20,6 +20,7 @@
         <module>services/notification-service</module>
         <module>services/web-bff</module>
         <module>services/tenant-service</module>
+        <module>services/api-gateway</module>
     </modules>
 
     <parent>

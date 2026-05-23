@@ -25,6 +25,11 @@ eventflow:
   outbox:
     poll-interval: 1000
   internal-token: ${INTERNAL_TOKEN:}
+  app-datasource:
+    # Set true in production to enforce RLS via the restricted `app` DB role.
+    # Requires DB_APP_USER=app and DB_APP_PASS=<secret> in the environment.
+    # Flyway and the outbox relay continue to run as the `eventflow` superuser.
+    enabled: false
 
 management:
   endpoints:

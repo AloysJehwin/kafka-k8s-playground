@@ -17,6 +17,7 @@ resources:
   - api-gateway.yaml
   - tenant-service.yaml
   - webhook-service.yaml
+  - billing-service.yaml
 
 commonLabels:
   app.kubernetes.io/part-of: eventflow

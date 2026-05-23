@@ -218,6 +218,23 @@ services:
       timeout: 3s
       retries: 10
 
+  postgres-billing:
+    image: postgres:16-alpine
+    container_name: postgres-billing
+    ports:
+      - "5436:5432"
+    environment:
+      POSTGRES_USER: billing
+      POSTGRES_PASSWORD: billing
+      POSTGRES_DB: billing
+    volumes:
+      - postgres-billing-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U billing"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
   webhook-service:
     image: eventflow/webhook-service:0.1.0
     container_name: webhook-service
@@ -237,10 +254,30 @@ services:
       SCHEMA_REGISTRY_URL: http://schema-registry:8081
       SERVER_PORT: 8091
 
+  billing-service:
+    image: eventflow/billing-service:0.1.0
+    container_name: billing-service
+    profiles: ["app"]
+    depends_on:
+      postgres-billing:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+    ports:
+      - "8092:8092"
+    environment:
+      DB_URL: jdbc:postgresql://postgres-billing:5432/billing
+      DB_USER: billing
+      DB_PASS: billing
+      KAFKA_BOOTSTRAP: kafka:29092
+      SCHEMA_REGISTRY_URL: http://schema-registry:8081
+      SERVER_PORT: 8092
+
 volumes:
   postgres-data:
   postgres-tenants-data:
   postgres-webhooks-data:
+  postgres-billing-data:
   grafana-data:
   loki-data:
   tempo-data:

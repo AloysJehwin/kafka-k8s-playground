@@ -1,0 +1,14 @@
+spring:
+  datasource:
+    url: ${spring.datasource.url}
+    username: ${spring.datasource.username}
+    password: ${spring.datasource.password}
+  kafka:
+    bootstrap-servers: ${spring.embedded.kafka.brokers}
+    properties:
+      schema.registry.url: mock://test
+
+eventflow:
+  billing:
+    draft-cron: "0 0 2 1 1 ?"
+    finalize-cron: "0 0 3 1 1 ?"

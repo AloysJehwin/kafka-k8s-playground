@@ -46,3 +46,8 @@ scrape_configs:
     static_configs:
       - targets: ['webhook-service:8091']
     metrics_path: /actuator/prometheus
+
+  - job_name: 'billing-service'
+    static_configs:
+      - targets: ['billing-service:8092']
+    metrics_path: /actuator/prometheus

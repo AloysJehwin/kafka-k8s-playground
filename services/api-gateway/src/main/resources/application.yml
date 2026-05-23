@@ -12,6 +12,10 @@ spring:
           uri: ${TENANT_SERVICE_URL:http://localhost:8090}
           predicates:
             - Path=/api/tenants/**
+        - id: billing-service
+          uri: ${BILLING_SERVICE_URL:http://localhost:8092}
+          predicates:
+            - Path=/api/billing/**
 
 server:
   port: ${SERVER_PORT:8080}
@@ -19,6 +23,7 @@ server:
 
 eventflow:
   tenant-service-url: ${TENANT_SERVICE_URL:http://localhost:8090}
+  billing-service-url: ${BILLING_SERVICE_URL:http://localhost:8092}
   internal-token: ${INTERNAL_TOKEN:}
 
 management:

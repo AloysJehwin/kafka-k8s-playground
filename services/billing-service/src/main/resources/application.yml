@@ -38,6 +38,7 @@ management:
         enabled: true
 
 eventflow:
+  internal-token: ${INTERNAL_TOKEN:}
   billing:
     draft-cron: "0 0 2 * * *"
     finalize-cron: "0 0 3 1 * *"

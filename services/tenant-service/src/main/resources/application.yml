@@ -16,6 +16,11 @@ spring:
 server:
   port: ${SERVER_PORT:8090}
   shutdown: graceful
+
+eventflow:
+  internal-token: ${INTERNAL_TOKEN:}
+  billing-service-url: ${BILLING_SERVICE_URL:http://localhost:8092}
+
 management:
   endpoints:
     web:

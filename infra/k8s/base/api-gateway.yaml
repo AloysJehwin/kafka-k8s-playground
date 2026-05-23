@@ -29,6 +29,8 @@ spec:
                 secretKeyRef:
                   name: eventflow-secrets
                   key: internal-token
+            - name: BILLING_SERVICE_URL
+              value: "http://billing-service:8092"
           resources:
             requests:
               cpu: 100m

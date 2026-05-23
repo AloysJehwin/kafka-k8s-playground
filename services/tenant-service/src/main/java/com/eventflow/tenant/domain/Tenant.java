@@ -71,6 +71,11 @@ public class Tenant {
         this.updatedAt = Instant.now();
     }
 
+    public void updatePlan(TenantPlan plan) {
+        this.plan = plan;
+        this.updatedAt = Instant.now();
+    }
+
     public UUID getId() { return id; }
     public String getSlug() { return slug; }
     public String getName() { return name; }

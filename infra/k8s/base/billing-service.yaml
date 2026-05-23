@@ -38,6 +38,11 @@ spec:
               value: "http://schema-registry:8081"
             - name: SERVER_PORT
               value: "8092"
+            - name: INTERNAL_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: eventflow-secrets
+                  key: internal-token
           resources:
             requests:
               cpu: 100m

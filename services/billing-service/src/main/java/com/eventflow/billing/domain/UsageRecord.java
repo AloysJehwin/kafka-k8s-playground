@@ -86,6 +86,11 @@ public class UsageRecord {
         return webhookDeliveryCount >= plan.webhookQuota();
     }
 
+    public void updatePlan(PlanTier plan) {
+        this.plan = plan;
+        this.updatedAt = Instant.now();
+    }
+
     public UUID getId() { return id; }
     public String getTenantId() { return tenantId; }
     public PlanTier getPlan() { return plan; }

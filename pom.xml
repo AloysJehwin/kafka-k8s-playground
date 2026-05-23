@@ -19,6 +19,7 @@
         <module>services/inventory-service</module>
         <module>services/notification-service</module>
         <module>services/web-bff</module>
+        <module>services/tenant-service</module>
     </modules>
 
     <parent>

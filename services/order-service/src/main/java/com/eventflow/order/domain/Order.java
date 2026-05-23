@@ -13,6 +13,9 @@ public class Order {
     private UUID id;
 
     @Column(nullable = false)
+    private String tenantId;
+
+    @Column(nullable = false)
     private String customerId;
 
     @Column(nullable = false)
@@ -36,9 +39,10 @@ public class Order {
 
     protected Order() {}
 
-    public Order(UUID id, String customerId, String productId, int quantity,
-                 BigDecimal amount, String currency) {
+    public Order(UUID id, String tenantId, String customerId, String productId,
+                 int quantity, BigDecimal amount, String currency) {
         this.id = id;
+        this.tenantId = tenantId;
         this.customerId = customerId;
         this.productId = productId;
         this.quantity = quantity;
@@ -52,6 +56,7 @@ public class Order {
     public void reject() { this.status = OrderStatus.REJECTED; }
 
     public UUID getId() { return id; }
+    public String getTenantId() { return tenantId; }
     public String getCustomerId() { return customerId; }
     public String getProductId() { return productId; }
     public int getQuantity() { return quantity; }

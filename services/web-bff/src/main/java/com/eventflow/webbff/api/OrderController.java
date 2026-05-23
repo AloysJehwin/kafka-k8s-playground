@@ -1,5 +1,6 @@
 package com.eventflow.webbff.api;
 
+import com.eventflow.webbff.security.TenantResolver;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Positive;
@@ -23,15 +24,18 @@ import java.util.Map;
 public class OrderController {
 
     private final RestClient orderClient;
+    private final TenantResolver tenantResolver;
 
     public OrderController(
             @Value("${eventflow.order-service-url}") String orderServiceUrl,
-            @Value("${eventflow.internal-token:}") String internalToken) {
+            @Value("${eventflow.internal-token:}") String internalToken,
+            TenantResolver tenantResolver) {
         this.orderClient = RestClient.builder()
             .requestFactory(new SimpleClientHttpRequestFactory())
             .baseUrl(orderServiceUrl)
             .defaultHeader("X-Internal-Token", internalToken)
             .build();
+        this.tenantResolver = tenantResolver;
     }
 
     public record PlaceOrderRequest(
@@ -47,6 +51,7 @@ public class OrderController {
             @AuthenticationPrincipal OAuth2User user) {
 
         var customerId = user.<String>getAttribute("sub");
+        var tenantId = tenantResolver.resolve(user);
         var payload = Map.of(
             "customerId", customerId,
             "productId", req.productId(),
@@ -58,6 +63,7 @@ public class OrderController {
         return orderClient.post()
             .uri("/api/orders")
             .contentType(MediaType.APPLICATION_JSON)
+            .header("X-Tenant-Id", tenantId)
             .body(payload)
             .retrieve()
             .toEntity(new org.springframework.core.ParameterizedTypeReference<Map<String, Object>>() {});
@@ -68,9 +74,11 @@ public class OrderController {
             @PathVariable String id,
             @AuthenticationPrincipal OAuth2User user) {
         var customerId = user.<String>getAttribute("sub");
+        var tenantId = tenantResolver.resolve(user);
         return orderClient.get()
             .uri("/api/orders/{id}", id)
             .header("X-Customer-Id", customerId)
+            .header("X-Tenant-Id", tenantId)
             .retrieve()
             .toEntity(new org.springframework.core.ParameterizedTypeReference<Map<String, Object>>() {});
     }
@@ -78,8 +86,10 @@ public class OrderController {
     @GetMapping
     public List<Map<String, Object>> myOrders(@AuthenticationPrincipal OAuth2User user) {
         var customerId = user.<String>getAttribute("sub");
+        var tenantId = tenantResolver.resolve(user);
         return orderClient.get()
             .uri(uriBuilder -> uriBuilder.path("/api/orders").queryParam("customerId", customerId).build())
+            .header("X-Tenant-Id", tenantId)
             .retrieve()
             .body(new org.springframework.core.ParameterizedTypeReference<List<Map<String, Object>>>() {});
     }

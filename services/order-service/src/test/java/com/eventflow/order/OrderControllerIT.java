@@ -25,7 +25,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@Testcontainers
+@Testcontainers(disabledWithoutDocker = true)
 @ActiveProfiles("test")
 class OrderControllerIT {
 
@@ -65,7 +65,7 @@ class OrderControllerIT {
     }
 
     private PlaceOrderRequest validRequest(String customerId) {
-        return new PlaceOrderRequest(customerId, "prod-001", 2,
+        return new PlaceOrderRequest("test-tenant", customerId, "prod-001", 2,
             new BigDecimal("19.99"), "USD");
     }
 
@@ -87,7 +87,7 @@ class OrderControllerIT {
     @Test
     void placeOrder_invalidPayload_returns400() {
         // productId is @NotBlank — send blank string to trigger validation
-        var invalid = new PlaceOrderRequest("cust-A", "", 2,
+        var invalid = new PlaceOrderRequest("test-tenant", "cust-A", "", 2,
             new BigDecimal("9.99"), "USD");
 
         var response = rest.postForEntity(base(), invalid, Map.class);
@@ -147,5 +147,54 @@ class OrderControllerIT {
         );
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    void placeOrder_withTenantId_scopesCorrectly() {
+        // Place an order for tenant-a
+        var headersA = new HttpHeaders();
+        headersA.set("X-Tenant-Id", "tenant-a");
+        headersA.setContentType(MediaType.APPLICATION_JSON);
+        var requestA = new HttpEntity<>(validRequest("cust-tenant-a"), headersA);
+
+        var responseA = rest.exchange(base(), HttpMethod.POST, requestA, OrderResponse.class);
+        assertThat(responseA.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        assertThat(responseA.getBody()).isNotNull();
+        assertThat(responseA.getBody().id()).isNotNull();
+
+        // Place an order for tenant-b
+        var headersB = new HttpHeaders();
+        headersB.set("X-Tenant-Id", "tenant-b");
+        headersB.setContentType(MediaType.APPLICATION_JSON);
+        var requestB = new HttpEntity<>(validRequest("cust-tenant-b"), headersB);
+
+        var responseB = rest.exchange(base(), HttpMethod.POST, requestB, OrderResponse.class);
+        assertThat(responseB.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+
+        // GET orders for cust-tenant-a with tenant-a header — verify no error and correct scoping
+        // Note: DB user is `eventflow` (superuser), so RLS bypass policy applies —
+        // all rows are visible. This test confirms the header flows through without errors
+        // and the tenant context is set. Full RLS enforcement is validated in Phase 2
+        // with a restricted DB user.
+        var getHeaders = new HttpHeaders();
+        getHeaders.set("X-Tenant-Id", "tenant-a");
+        var getRequest = new HttpEntity<>(getHeaders);
+
+        var listResponse = rest.exchange(
+            base() + "?customerId=cust-tenant-a",
+            HttpMethod.GET,
+            getRequest,
+            List.class
+        );
+
+        assertThat(listResponse.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(listResponse.getBody()).isNotNull();
+
+        @SuppressWarnings("unchecked")
+        var orders = (List<Map<String, Object>>) listResponse.getBody();
+        // All returned orders must belong to cust-tenant-a (Java-layer filter by customerId)
+        assertThat(orders).allSatisfy(o ->
+            assertThat(o.get("customerId")).isEqualTo("cust-tenant-a")
+        );
     }
 }

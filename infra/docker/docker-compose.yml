@@ -99,8 +99,37 @@ services:
     volumes:
       - ./otel-collector.yaml:/etc/otel/config.yaml:ro
     ports:
-      - "4317:4317"  # OTLP gRPC
-      - "4318:4318"  # OTLP HTTP
+      - "4317:4317"
+      - "4318:4318"
+
+  web-bff:
+    image: eventflow/web-bff:0.1.0
+    container_name: web-bff
+    profiles: ["app"]
+    env_file:
+      - ../../.env
+    depends_on:
+      kafka:
+        condition: service_healthy
+    ports:
+      - "8085:8085"
+    environment:
+      KAFKA_BOOTSTRAP: kafka:29092
+      SCHEMA_REGISTRY_URL: http://schema-registry:8081
+      ORDER_SERVICE_URL: http://order-service:8080
+      FRONTEND_URL: http://localhost:5173
+
+  web:
+    image: nginx:1.27-alpine
+    container_name: web
+    profiles: ["app"]
+    depends_on:
+      - web-bff
+    ports:
+      - "5173:80"
+    volumes:
+      - ../../web/dist:/usr/share/nginx/html:ro
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
 
 volumes:
   postgres-data:

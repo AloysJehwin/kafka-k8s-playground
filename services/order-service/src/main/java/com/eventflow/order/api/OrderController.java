@@ -50,6 +50,16 @@ public class OrderController {
 
     public record OrderResponse(UUID id, String status) {}
 
+    public record OrderDetail(UUID id, String customerId, String productId,
+                              int quantity, BigDecimal amount, String currency,
+                              String status, Instant createdAt) {
+        static OrderDetail from(Order o) {
+            return new OrderDetail(o.getId(), o.getCustomerId(), o.getProductId(),
+                o.getQuantity(), o.getAmount(), o.getCurrency(),
+                o.getStatus().name(), o.getCreatedAt());
+        }
+    }
+
     /**
      * Order placement: writes Order + OutboxEvent atomically. The relay later
      * publishes to Kafka. Caller gets a 201 immediately — eventually consistent.
@@ -87,10 +97,17 @@ public class OrderController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<OrderResponse> get(@PathVariable UUID id) {
+    public ResponseEntity<OrderDetail> get(@PathVariable UUID id) {
         return orders.findById(id)
-            .map(o -> ResponseEntity.ok(new OrderResponse(o.getId(), o.getStatus().name())))
+            .map(o -> ResponseEntity.ok(OrderDetail.from(o)))
             .orElse(ResponseEntity.notFound().build());
+    }
+
+    @GetMapping
+    public java.util.List<OrderDetail> listByCustomer(@RequestParam String customerId) {
+        return orders.findByCustomerIdOrderByCreatedAtDesc(customerId).stream()
+            .map(OrderDetail::from)
+            .toList();
     }
 
     private String encode(OrderPlaced event) {

@@ -46,6 +46,33 @@ services:
       requests: { memory: 384Mi, cpu: 200m }
       limits:   { memory: 768Mi, cpu: 500m }
 
+  webBff:
+    enabled: true
+    image: eventflow/web-bff
+    tag: 0.1.0
+    replicas: 2
+    port: 8085
+    resources:
+      requests: { memory: 384Mi, cpu: 200m }
+      limits:   { memory: 768Mi, cpu: 500m }
+    env:
+      ORDER_SERVICE_URL: http://order-service:8080
+      FRONTEND_URL: http://web
+
+web:
+  enabled: true
+  image: eventflow/web
+  tag: 0.1.0
+  replicas: 2
+  port: 80
+
+oauth:
+  google:
+    clientId: ""
+    clientSecretRef:
+      name: google-oauth
+      key: client-secret
+
 postgres:
   username: eventflow
   password: eventflow

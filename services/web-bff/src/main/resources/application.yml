@@ -1,0 +1,44 @@
+spring:
+  application:
+    name: web-bff
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${GOOGLE_CLIENT_ID:placeholder-not-configured}
+            client-secret: ${GOOGLE_CLIENT_SECRET:placeholder-not-configured}
+            scope:
+              - openid
+              - profile
+              - email
+        provider:
+          google:
+            issuer-uri: https://accounts.google.com
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP:localhost:9092}
+
+server:
+  port: 8085
+  shutdown: graceful
+
+eventflow:
+  schema-registry-url: ${SCHEMA_REGISTRY_URL:http://localhost:8081}
+  order-service-url: ${ORDER_SERVICE_URL:http://localhost:8088}
+  frontend-url: ${FRONTEND_URL:http://localhost:5173}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: always
+
+logging:
+  level:
+    org.springframework.security: INFO
+    com.eventflow: DEBUG

@@ -46,6 +46,21 @@ image-build:
 	./mvnw -pl services/payment-service      spring-boot:build-image -DskipTests -Dspring-boot.build-image.imageName=eventflow/payment-service:0.1.0
 	./mvnw -pl services/inventory-service    spring-boot:build-image -DskipTests -Dspring-boot.build-image.imageName=eventflow/inventory-service:0.1.0
 	./mvnw -pl services/notification-service spring-boot:build-image -DskipTests -Dspring-boot.build-image.imageName=eventflow/notification-service:0.1.0
+	./mvnw -pl services/web-bff              spring-boot:build-image -DskipTests -Dspring-boot.build-image.imageName=eventflow/web-bff:0.1.0
+
+web-install:
+	cd web && npm install
+
+web-dev:
+	cd web && npm run dev
+
+web-build:
+	cd web && npm run build
+
+app-up:
+	cd infra/docker && docker compose --profile app up -d
+	@echo "Frontend:    http://localhost:5173"
+	@echo "BFF:         http://localhost:8085"
 
 # --- Kubernetes (kind) -----------------------------------------------------
 

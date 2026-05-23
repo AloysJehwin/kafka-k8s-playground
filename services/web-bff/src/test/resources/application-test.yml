@@ -1,0 +1,12 @@
+eventflow:
+  order-service-url: http://localhost:0  # overridden by DynamicPropertySource
+  frontend-url: http://localhost:5173
+  internal-token: test-token
+spring:
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: test
+            client-secret: test

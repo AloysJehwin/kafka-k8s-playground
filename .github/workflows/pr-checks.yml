@@ -1,0 +1,91 @@
+name: PR Checks
+
+on:
+  pull_request:
+
+jobs:
+  lint:
+    name: Checkstyle Lint
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java 21 (Temurin)
+        uses: actions/setup-java@v4
+        with:
+          java-version: "21"
+          distribution: temurin
+
+      - name: Cache Maven local repository
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+
+      - name: Run Checkstyle
+        run: |
+          if [ -f ".mvn/checkstyle.xml" ]; then
+            echo "Checkstyle config found — running ./mvnw checkstyle:check"
+            ./mvnw -B checkstyle:check --no-transfer-progress
+          else
+            echo "checkstyle config not found, skipping"
+          fi
+
+  security-scan:
+    name: OWASP Dependency Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java 21 (Temurin)
+        uses: actions/setup-java@v4
+        with:
+          java-version: "21"
+          distribution: temurin
+
+      - name: Cache Maven local repository
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+
+      - name: Cache OWASP NVD data
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository/org/owasp/dependency-check-data
+          key: ${{ runner.os }}-owasp-nvd-${{ github.run_id }}
+          restore-keys: |
+            ${{ runner.os }}-owasp-nvd-
+
+      - name: Run OWASP Dependency Check
+        # NVD_API_KEY is optional — the check runs without it but may be rate-limited.
+        # Add the secret at Settings > Secrets and variables > Actions if you have an NVD API key.
+        run: |
+          if [ -n "${{ secrets.NVD_API_KEY }}" ]; then
+            echo "NVD API key found — using it for faster data updates"
+            ./mvnw -B dependency-check:check \
+              -DfailBuildOnCVSS=9 \
+              -DnvdApiKey=${{ secrets.NVD_API_KEY }} \
+              --no-transfer-progress
+          else
+            echo "NVD_API_KEY secret not set — running without API key (rate limits may apply)"
+            ./mvnw -B dependency-check:check \
+              -DfailBuildOnCVSS=9 \
+              --no-transfer-progress
+          fi
+
+      - name: Upload dependency check report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dependency-check-report
+          path: "**/target/dependency-check-report.html"
+          retention-days: 14

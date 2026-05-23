@@ -2,6 +2,9 @@ package com.eventflow.order.infrastructure.outbox;
 
 import com.eventflow.events.OrderPlaced;
 import com.eventflow.events.Topics;
+import io.micrometer.core.instrument.Gauge;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Metrics;
 import org.apache.avro.io.DatumReader;
 import org.apache.avro.io.DecoderFactory;
 import org.apache.avro.specific.SpecificDatumReader;
@@ -20,6 +23,10 @@ import java.util.Base64;
  * Polls outbox table and publishes to Kafka. After successful send, marks
  * the row processed. Producer is idempotent so duplicate publishes are safe.
  *
+ * Failed events are retried up to MAX_RETRIES times across polling cycles.
+ * Events exceeding MAX_RETRIES are marked as dead letters (processedAt set)
+ * to prevent indefinite blocking, and a dead_letter counter metric is emitted.
+ *
  * In production: replace with Debezium CDC for true exactly-once outbox relay.
  */
 @Component
@@ -27,14 +34,20 @@ public class OutboxRelay {
 
     private static final Logger log = LoggerFactory.getLogger(OutboxRelay.class);
     private static final int BATCH_SIZE = 100;
+    private static final int MAX_RETRIES = 5;
 
     private final OutboxRepository repository;
     private final KafkaTemplate<String, Object> kafkaTemplate;
 
     public OutboxRelay(OutboxRepository repository,
-                       KafkaTemplate<String, Object> kafkaTemplate) {
+                       KafkaTemplate<String, Object> kafkaTemplate,
+                       MeterRegistry registry) {
         this.repository = repository;
         this.kafkaTemplate = kafkaTemplate;
+
+        Gauge.builder("eventflow.outbox.pending", repository, r -> r.countUnprocessed())
+             .description("Number of unprocessed outbox events")
+             .register(registry);
     }
 
     @Scheduled(fixedDelayString = "${eventflow.outbox.poll-interval:1000}")
@@ -50,8 +63,24 @@ public class OutboxRelay {
                 kafkaTemplate.send(event.getTopic(), event.getAggregateId(), payload).get();
                 event.markProcessed();
             } catch (Exception e) {
-                log.error("Outbox relay failed for {} — will retry", event.getId(), e);
-                break; // preserve ordering: stop on first failure
+                int newRetryCount = event.getRetryCount() + 1;
+                event.setRetryCount(newRetryCount);
+
+                String errorMessage = e.getMessage();
+                if (errorMessage != null && errorMessage.length() > 500) {
+                    errorMessage = errorMessage.substring(0, 500);
+                }
+                event.setLastError(errorMessage);
+
+                if (newRetryCount >= MAX_RETRIES) {
+                    log.warn("Outbox event {} exceeded max retries, marking as dead letter", event.getId());
+                    event.markProcessed();
+                    Metrics.counter("eventflow.outbox.dead_letter").increment();
+                } else {
+                    log.error("Outbox relay failed for {} (attempt {}/{}) — will retry next cycle",
+                              event.getId(), newRetryCount, MAX_RETRIES, e);
+                }
+                // Continue to next event — do not break on failure
             }
         }
     }

@@ -26,6 +26,7 @@ eventflow:
   schema-registry-url: ${SCHEMA_REGISTRY_URL:http://localhost:8081}
   order-service-url: ${ORDER_SERVICE_URL:http://localhost:8088}
   frontend-url: ${FRONTEND_URL:http://localhost:5173}
+  internal-token: ${INTERNAL_TOKEN:}
 
 management:
   endpoints:

@@ -1,0 +1,157 @@
+name: Docker Build & Push
+
+# NOTE: This workflow requires Dockerfiles to be present in each service directory
+# before it will execute any build steps. Dockerfiles are not yet committed to the
+# repository. Add a Dockerfile at e.g. services/order-service/Dockerfile (and
+# equivalents for all other services) to activate the corresponding build job.
+# See the `if: hashFiles(...)` condition on each job below.
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  REGISTRY: ghcr.io
+
+jobs:
+  build-order-service:
+    name: Build & Push order-service
+    runs-on: ubuntu-latest
+    # Only runs when a Dockerfile for this service exists in the repository
+    if: hashFiles('services/order-service/Dockerfile') != ''
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push order-service image
+        uses: docker/build-push-action@v6
+        with:
+          context: services/order-service
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ github.repository_owner }}/eventflow-order-service:latest
+            ${{ env.REGISTRY }}/${{ github.repository_owner }}/eventflow-order-service:${{ github.sha && substring(github.sha, 0, 7) || 'unknown' }}
+
+  build-payment-service:
+    name: Build & Push payment-service
+    runs-on: ubuntu-latest
+    if: hashFiles('services/payment-service/Dockerfile') != ''
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push payment-service image
+        uses: docker/build-push-action@v6
+        with:
+          context: services/payment-service
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ github.repository_owner }}/eventflow-payment-service:latest
+            ${{ env.REGISTRY }}/${{ github.repository_owner }}/eventflow-payment-service:${{ github.sha && substring(github.sha, 0, 7) || 'unknown' }}
+
+  build-inventory-service:
+    name: Build & Push inventory-service
+    runs-on: ubuntu-latest
+    if: hashFiles('services/inventory-service/Dockerfile') != ''
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push inventory-service image
+        uses: docker/build-push-action@v6
+        with:
+          context: services/inventory-service
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ github.repository_owner }}/eventflow-inventory-service:latest
+            ${{ env.REGISTRY }}/${{ github.repository_owner }}/eventflow-inventory-service:${{ github.sha && substring(github.sha, 0, 7) || 'unknown' }}
+
+  build-notification-service:
+    name: Build & Push notification-service
+    runs-on: ubuntu-latest
+    if: hashFiles('services/notification-service/Dockerfile') != ''
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push notification-service image
+        uses: docker/build-push-action@v6
+        with:
+          context: services/notification-service
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ github.repository_owner }}/eventflow-notification-service:latest
+            ${{ env.REGISTRY }}/${{ github.repository_owner }}/eventflow-notification-service:${{ github.sha && substring(github.sha, 0, 7) || 'unknown' }}
+
+  build-web-bff:
+    name: Build & Push web-bff
+    runs-on: ubuntu-latest
+    if: hashFiles('services/web-bff/Dockerfile') != ''
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push web-bff image
+        uses: docker/build-push-action@v6
+        with:
+          context: services/web-bff
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ github.repository_owner }}/eventflow-web-bff:latest
+            ${{ env.REGISTRY }}/${{ github.repository_owner }}/eventflow-web-bff:${{ github.sha && substring(github.sha, 0, 7) || 'unknown' }}

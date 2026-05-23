@@ -58,6 +58,17 @@ services:
     env:
       ORDER_SERVICE_URL: http://order-service:8080
       FRONTEND_URL: http://web
+    oauth:
+      google:
+        clientIdSecretRef:
+          name: eventflow-oauth-secrets
+          key: google-client-id
+        clientSecretSecretRef:
+          name: eventflow-oauth-secrets
+          key: google-client-secret
+    internalTokenSecretRef:
+      name: eventflow-oauth-secrets
+      key: internal-token
 
 web:
   enabled: true
@@ -65,13 +76,6 @@ web:
   tag: 0.1.0
   replicas: 2
   port: 80
-
-oauth:
-  google:
-    clientId: ""
-    clientSecretRef:
-      name: google-oauth
-      key: client-secret
 
 postgres:
   username: eventflow

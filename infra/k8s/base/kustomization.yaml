@@ -12,6 +12,8 @@ resources:
   - inventory-service.yaml
   - notification-service.yaml
   - networkpolicy.yaml
+  - web-bff.yaml
+  - secrets.yaml
 
 commonLabels:
   app.kubernetes.io/part-of: eventflow

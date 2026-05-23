@@ -7,7 +7,6 @@ import com.eventflow.order.infrastructure.outbox.OutboxEvent;
 import com.eventflow.order.infrastructure.outbox.OutboxRepository;
 import com.eventflow.order.infrastructure.persistence.OrderRepository;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Positive;
 import org.apache.avro.io.BinaryEncoder;
@@ -15,9 +14,11 @@ import org.apache.avro.io.EncoderFactory;
 import org.apache.avro.specific.SpecificDatumWriter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.io.ByteArrayOutputStream;
 import java.math.BigDecimal;
@@ -97,14 +98,22 @@ public class OrderController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<OrderDetail> get(@PathVariable UUID id) {
+    public ResponseEntity<OrderDetail> get(
+            @PathVariable UUID id,
+            @RequestHeader(value = "X-Customer-Id", required = false) String requestingCustomer) {
         return orders.findById(id)
-            .map(o -> ResponseEntity.ok(OrderDetail.from(o)))
+            .map(o -> {
+                // If caller provides their identity, enforce ownership
+                if (requestingCustomer != null && !requestingCustomer.equals(o.getCustomerId())) {
+                    throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Order does not belong to caller");
+                }
+                return ResponseEntity.ok(OrderDetail.from(o));
+            })
             .orElse(ResponseEntity.notFound().build());
     }
 
     @GetMapping
-    public java.util.List<OrderDetail> listByCustomer(@RequestParam String customerId) {
+    public java.util.List<OrderDetail> listByCustomer(@RequestParam @NotBlank String customerId) {
         return orders.findByCustomerIdOrderByCreatedAtDesc(customerId).stream()
             .map(OrderDetail::from)
             .toList();

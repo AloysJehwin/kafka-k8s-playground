@@ -1,12 +1,6 @@
 package com.eventflow.order;
 
-import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.ActiveProfiles;
-
-@SpringBootTest
-@ActiveProfiles("test")
+// Context-load coverage is provided by OrderControllerIT (Testcontainers-backed).
+// This file intentionally left as a placeholder to preserve the package structure.
 class OrderServiceApplicationTests {
-    @Test
-    void contextLoads() { }
 }

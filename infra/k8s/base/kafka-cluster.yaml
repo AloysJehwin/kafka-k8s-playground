@@ -5,6 +5,9 @@ kind: Kafka
 metadata:
   name: eventflow-kafka
   namespace: eventflow
+  annotations:
+    strimzi.io/node-pools: enabled
+    strimzi.io/kraft: enabled
 spec:
   kafka:
     version: 3.8.0
@@ -36,12 +39,6 @@ spec:
       limits:
         memory: 2Gi
         cpu: 1000m
-  zookeeper:
-    replicas: 3
-    storage:
-      type: persistent-claim
-      size: 5Gi
-      deleteClaim: false
   entityOperator:
     topicOperator: {}
     userOperator: {}

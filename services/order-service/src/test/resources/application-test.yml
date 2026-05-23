@@ -1,0 +1,14 @@
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: none
+  flyway:
+    enabled: true
+eventflow:
+  outbox:
+    poll-interval: 500
+  internal-token:
+management:
+  tracing:
+    sampling:
+      probability: 0.0

@@ -24,6 +24,7 @@ eventflow:
   schema-registry-url: ${SCHEMA_REGISTRY_URL:http://localhost:8081}
   outbox:
     poll-interval: 1000
+  internal-token: ${INTERNAL_TOKEN:}
 
 management:
   endpoints:

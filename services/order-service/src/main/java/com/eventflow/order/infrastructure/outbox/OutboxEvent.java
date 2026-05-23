@@ -39,6 +39,12 @@ public class OutboxEvent {
     @Column
     private Instant processedAt;
 
+    @Column(name = "retry_count", nullable = false)
+    private int retryCount = 0;
+
+    @Column(name = "last_error", length = 512)
+    private String lastError;
+
     protected OutboxEvent() {}
 
     public OutboxEvent(String aggregateType, String aggregateId,
@@ -60,4 +66,8 @@ public class OutboxEvent {
     public String getEventType() { return eventType; }
     public String getPayload() { return payload; }
     public Instant getProcessedAt() { return processedAt; }
+    public int getRetryCount() { return retryCount; }
+    public void setRetryCount(int retryCount) { this.retryCount = retryCount; }
+    public String getLastError() { return lastError; }
+    public void setLastError(String lastError) { this.lastError = lastError; }
 }

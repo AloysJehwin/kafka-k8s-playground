@@ -1,0 +1,21 @@
+eventflow:
+  internal-token: test-token
+  # tenant-service-url is overridden via @DynamicPropertySource to the WireMock base URL
+
+spring:
+  cloud:
+    gateway:
+      routes:
+        - id: order-service
+          uri: ${ORDER_SERVICE_URL:http://localhost:9999}
+          predicates:
+            - Path=/api/orders/**
+        - id: tenant-service
+          uri: ${TENANT_SERVICE_URL:http://localhost:9999}
+          predicates:
+            - Path=/api/tenants/**
+
+logging:
+  level:
+    org.springframework.cloud.gateway: DEBUG
+    com.eventflow: DEBUG

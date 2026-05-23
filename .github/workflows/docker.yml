@@ -155,3 +155,31 @@ jobs:
           tags: |
             ${{ env.REGISTRY }}/${{ github.repository_owner }}/eventflow-web-bff:latest
             ${{ env.REGISTRY }}/${{ github.repository_owner }}/eventflow-web-bff:${{ github.sha && substring(github.sha, 0, 7) || 'unknown' }}
+
+  build-api-gateway:
+    name: Build & Push api-gateway
+    runs-on: ubuntu-latest
+    if: hashFiles('services/api-gateway/Dockerfile') != ''
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push api-gateway image
+        uses: docker/build-push-action@v6
+        with:
+          context: services/api-gateway
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ github.repository_owner }}/eventflow-api-gateway:latest
+            ${{ env.REGISTRY }}/${{ github.repository_owner }}/eventflow-api-gateway:${{ github.sha && substring(github.sha, 0, 7) || 'unknown' }}

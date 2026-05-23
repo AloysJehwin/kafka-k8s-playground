@@ -154,8 +154,56 @@ services:
       - ../../web/dist:/usr/share/nginx/html:ro
       - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
 
+  postgres-tenants:
+    image: postgres:16-alpine
+    container_name: postgres-tenants
+    ports:
+      - "5434:5432"
+    environment:
+      POSTGRES_USER: eventflow
+      POSTGRES_PASSWORD: eventflow
+      POSTGRES_DB: tenants
+    volumes:
+      - postgres-tenants-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U eventflow"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  tenant-service:
+    image: eventflow/tenant-service:0.1.0
+    container_name: tenant-service
+    profiles: ["app"]
+    depends_on:
+      postgres-tenants:
+        condition: service_healthy
+    ports:
+      - "8090:8090"
+    environment:
+      DB_URL: jdbc:postgresql://postgres-tenants:5432/tenants
+      DB_USER: eventflow
+      DB_PASS: eventflow
+      SERVER_PORT: 8090
+
+  api-gateway:
+    image: eventflow/api-gateway:0.1.0
+    container_name: api-gateway
+    profiles: ["app"]
+    depends_on:
+      - tenant-service
+      - web-bff
+    ports:
+      - "8080:8080"
+    environment:
+      ORDER_SERVICE_URL: http://order-service:8088
+      TENANT_SERVICE_URL: http://tenant-service:8090
+      INTERNAL_TOKEN: ${INTERNAL_TOKEN:-}
+      SERVER_PORT: 8080
+
 volumes:
   postgres-data:
+  postgres-tenants-data:
   grafana-data:
   loki-data:
   tempo-data:

@@ -42,6 +42,7 @@ public class OrderController {
     }
 
     public record PlaceOrderRequest(
+        @NotBlank String tenantId,
         @NotBlank String customerId,
         @NotBlank String productId,
         @Positive int quantity,
@@ -51,11 +52,11 @@ public class OrderController {
 
     public record OrderResponse(UUID id, String status) {}
 
-    public record OrderDetail(UUID id, String customerId, String productId,
+    public record OrderDetail(UUID id, String tenantId, String customerId, String productId,
                               int quantity, BigDecimal amount, String currency,
                               String status, Instant createdAt) {
         static OrderDetail from(Order o) {
-            return new OrderDetail(o.getId(), o.getCustomerId(), o.getProductId(),
+            return new OrderDetail(o.getId(), o.getTenantId(), o.getCustomerId(), o.getProductId(),
                 o.getQuantity(), o.getAmount(), o.getCurrency(),
                 o.getStatus().name(), o.getCreatedAt());
         }
@@ -67,11 +68,15 @@ public class OrderController {
      */
     @PostMapping
     @Transactional
-    public ResponseEntity<OrderResponse> place(@Valid @RequestBody PlaceOrderRequest req) {
+    public ResponseEntity<OrderResponse> place(
+            @Valid @RequestBody PlaceOrderRequest req,
+            @RequestHeader(value = "X-Tenant-Id", required = false) String tenantId) {
         var orderId = UUID.randomUUID();
         var correlationId = UUID.randomUUID().toString();
+        // BFF-injected header takes precedence; request body field is fallback for internal/test calls
+        var effectiveTenantId = tenantId != null ? tenantId : req.tenantId();
 
-        var order = new Order(orderId, req.customerId(), req.productId(),
+        var order = new Order(orderId, effectiveTenantId, req.customerId(), req.productId(),
             req.quantity(), req.amount(), req.currency());
         orders.save(order);
 
@@ -84,15 +89,16 @@ public class OrderController {
             .setCurrency(req.currency())
             .setPlacedAt(Instant.now())
             .setCorrelationId(correlationId)
+            .setTenantId(effectiveTenantId)
             .build();
 
         outbox.save(new OutboxEvent(
             "Order", orderId.toString(),
             Topics.ORDERS_PLACED, "OrderPlaced",
-            encode(event)
+            encode(event), effectiveTenantId
         ));
 
-        log.info("Order placed orderId={} correlationId={}", orderId, correlationId);
+        log.info("Order placed orderId={} tenantId={} correlationId={}", orderId, effectiveTenantId, correlationId);
         return ResponseEntity.created(URI.create("/api/orders/" + orderId))
             .body(new OrderResponse(orderId, order.getStatus().name()));
     }

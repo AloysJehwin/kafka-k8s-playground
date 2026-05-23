@@ -1,0 +1,28 @@
+spring:
+  application:
+    name: tenant-service
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5434/tenants}
+    username: ${DB_USER:eventflow}
+    password: ${DB_PASS:eventflow}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate.jdbc.time_zone: UTC
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+server:
+  port: ${SERVER_PORT:8090}
+  shutdown: graceful
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: always

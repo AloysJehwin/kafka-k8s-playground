@@ -92,6 +92,30 @@ class WebBffOrderControllerTest {
         // Verify the downstream call included the customerId from the OAuth2 sub claim
         wireMock.verify(postRequestedFor(urlEqualTo("/api/orders"))
             .withRequestBody(matchingJsonPath("$.customerId", equalTo("user123"))));
+        // Verify X-Tenant-Id falls back to the configured default (test profile sets test-tenant)
+        wireMock.verify(postRequestedFor(urlEqualTo("/api/orders"))
+            .withHeader("X-Tenant-Id", equalTo("test-tenant")));
+    }
+
+    @Test
+    void placeOrder_withTenantClaim_forwardsTenantId() throws Exception {
+        wireMock.stubFor(com.github.tomakehurst.wiremock.client.WireMock.post(urlEqualTo("/api/orders"))
+            .willReturn(aResponse()
+                .withStatus(201)
+                .withHeader("Content-Type", "application/json")
+                .withBody("{\"id\":\"abc\",\"status\":\"PLACED\"}")));
+
+        mvc.perform(post("/api/orders")
+                .with(oauth2Login().attributes(attrs -> {
+                    attrs.put("sub", "user123");
+                    attrs.put("tenant_id", "acme-corp");
+                }))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(validOrderJson()))
+            .andExpect(status().is2xxSuccessful());
+
+        wireMock.verify(postRequestedFor(urlEqualTo("/api/orders"))
+            .withHeader("X-Tenant-Id", equalTo("acme-corp")));
     }
 
     @Test

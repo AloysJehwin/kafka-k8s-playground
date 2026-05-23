@@ -45,10 +45,14 @@ public class OutboxEvent {
     @Column(name = "last_error", length = 512)
     private String lastError;
 
+    @Column(name = "tenant_id", nullable = false)
+    private String tenantId;
+
     protected OutboxEvent() {}
 
     public OutboxEvent(String aggregateType, String aggregateId,
-                       String topic, String eventType, String payload) {
+                       String topic, String eventType, String payload,
+                       String tenantId) {
         this.id = UUID.randomUUID();
         this.aggregateType = aggregateType;
         this.aggregateId = aggregateId;
@@ -56,6 +60,7 @@ public class OutboxEvent {
         this.eventType = eventType;
         this.payload = payload;
         this.createdAt = Instant.now();
+        this.tenantId = tenantId;
     }
 
     public void markProcessed() { this.processedAt = Instant.now(); }
@@ -70,4 +75,5 @@ public class OutboxEvent {
     public void setRetryCount(int retryCount) { this.retryCount = retryCount; }
     public String getLastError() { return lastError; }
     public void setLastError(String lastError) { this.lastError = lastError; }
+    public String getTenantId() { return tenantId; }
 }

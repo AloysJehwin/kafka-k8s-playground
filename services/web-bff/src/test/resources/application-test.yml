@@ -2,6 +2,7 @@ eventflow:
   order-service-url: http://localhost:0  # overridden by DynamicPropertySource
   frontend-url: http://localhost:5173
   internal-token: test-token
+  default-tenant-id: test-tenant
 spring:
   security:
     oauth2:

@@ -185,6 +185,8 @@ services:
       DB_USER: eventflow
       DB_PASS: eventflow
       SERVER_PORT: 8090
+      INTERNAL_TOKEN: ${INTERNAL_TOKEN:-}
+      BILLING_SERVICE_URL: http://billing-service:8092
 
   api-gateway:
     image: eventflow/api-gateway:0.1.0
@@ -193,11 +195,13 @@ services:
     depends_on:
       - tenant-service
       - web-bff
+      - billing-service
     ports:
       - "8080:8080"
     environment:
       ORDER_SERVICE_URL: http://order-service:8088
       TENANT_SERVICE_URL: http://tenant-service:8090
+      BILLING_SERVICE_URL: http://billing-service:8092
       INTERNAL_TOKEN: ${INTERNAL_TOKEN:-}
       SERVER_PORT: 8080
 
@@ -271,6 +275,7 @@ services:
       DB_PASS: billing
       KAFKA_BOOTSTRAP: kafka:29092
       SCHEMA_REGISTRY_URL: http://schema-registry:8081
+      INTERNAL_TOKEN: ${INTERNAL_TOKEN:-}
       SERVER_PORT: 8092
 
 volumes:

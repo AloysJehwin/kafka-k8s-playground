@@ -1,11 +1,14 @@
 package com.eventflow.tenant.api;
 
+import com.eventflow.tenant.billing.BillingClient;
 import com.eventflow.tenant.domain.Tenant;
 import com.eventflow.tenant.domain.TenantPlan;
 import com.eventflow.tenant.domain.TenantStatus;
 import com.eventflow.tenant.infrastructure.TenantRepository;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -13,6 +16,7 @@ import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
@@ -24,6 +28,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.springframework.http.HttpStatus.CONFLICT;
+import static org.springframework.http.HttpStatus.FORBIDDEN;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
 
 @RestController
@@ -32,23 +37,26 @@ import static org.springframework.http.HttpStatus.NOT_FOUND;
 public class TenantController {
 
     private final TenantRepository repository;
+    private final BillingClient billingClient;
+    private final String internalToken;
 
-    public TenantController(TenantRepository repository) {
+    public TenantController(TenantRepository repository,
+                            BillingClient billingClient,
+                            @Value("${eventflow.internal-token:}") String internalToken) {
         this.repository = repository;
+        this.billingClient = billingClient;
+        this.internalToken = internalToken;
     }
 
     record CreateTenantRequest(@NotBlank String slug, @NotBlank String name, TenantPlan plan) {}
+    record UpdatePlanRequest(@NotNull TenantPlan plan) {}
 
     record TenantResponse(UUID id, String slug, String name, String plan, String status, String apiKey, Instant createdAt) {
         static TenantResponse from(Tenant t) {
             return new TenantResponse(
-                t.getId(),
-                t.getSlug(),
-                t.getName(),
-                t.getPlan().name(),
-                t.getStatus().name(),
-                t.getApiKey(),
-                t.getCreatedAt()
+                t.getId(), t.getSlug(), t.getName(),
+                t.getPlan().name(), t.getStatus().name(),
+                t.getApiKey(), t.getCreatedAt()
             );
         }
     }
@@ -80,9 +88,7 @@ public class TenantController {
     @GetMapping
     public List<TenantResponse> listActive() {
         return repository.findByStatus(TenantStatus.ACTIVE)
-            .stream()
-            .map(TenantResponse::from)
-            .toList();
+            .stream().map(TenantResponse::from).toList();
     }
 
     @GetMapping("/by-slug/{slug}")
@@ -102,8 +108,7 @@ public class TenantController {
 
     @PatchMapping("/{id}/suspend")
     public ResponseEntity<TenantResponse> suspend(@PathVariable UUID id) {
-        Tenant tenant = repository.findById(id)
-            .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "Tenant not found: " + id));
+        Tenant tenant = load(id);
         tenant.suspend();
         repository.save(tenant);
         return ResponseEntity.ok(TenantResponse.from(tenant));
@@ -111,10 +116,43 @@ public class TenantController {
 
     @PatchMapping("/{id}/reactivate")
     public ResponseEntity<TenantResponse> reactivate(@PathVariable UUID id) {
-        Tenant tenant = repository.findById(id)
-            .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "Tenant not found: " + id));
+        Tenant tenant = load(id);
         tenant.reactivate();
         repository.save(tenant);
         return ResponseEntity.ok(TenantResponse.from(tenant));
     }
+
+    @PatchMapping("/{id}/plan")
+    public ResponseEntity<TenantResponse> updatePlan(
+            @PathVariable UUID id,
+            @Valid @RequestBody UpdatePlanRequest req,
+            @RequestHeader(value = "X-Internal-Token", required = false) String token) {
+
+        requireInternal(token);
+        Tenant tenant = load(id);
+        tenant.updatePlan(req.plan());
+        repository.save(tenant);
+        billingClient.syncPlan(tenant.getId().toString(), req.plan().name());
+        return ResponseEntity.ok(TenantResponse.from(tenant));
+    }
+
+    // Admin: list all tenants regardless of status
+    @GetMapping("/admin/all")
+    public List<TenantResponse> listAll(
+            @RequestHeader(value = "X-Internal-Token", required = false) String token) {
+        requireInternal(token);
+        return repository.findAll().stream().map(TenantResponse::from).toList();
+    }
+
+    private Tenant load(UUID id) {
+        return repository.findById(id)
+            .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "Tenant not found: " + id));
+    }
+
+    private void requireInternal(String token) {
+        if (internalToken.isBlank() || !internalToken.equals(token)) {
+            throw new ResponseStatusException(FORBIDDEN, "Admin access requires X-Internal-Token");
+        }
+    }
 }
+

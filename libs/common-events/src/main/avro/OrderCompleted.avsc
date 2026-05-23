@@ -7,6 +7,7 @@
     {"name": "status", "type": {"type": "enum", "name": "OrderStatus", "symbols": ["CONFIRMED", "REJECTED"]}},
     {"name": "reason", "type": ["null", "string"], "default": null},
     {"name": "completedAt", "type": {"type": "long", "logicalType": "timestamp-millis"}},
-    {"name": "correlationId", "type": "string"}
+    {"name": "correlationId", "type": "string"},
+    {"name": "tenantId", "type": "string", "default": ""}
   ]
 }

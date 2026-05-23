@@ -80,6 +80,7 @@ public class InventoryTopology {
                 .setStatus(status)
                 .setReservedAt(Instant.now())
                 .setCorrelationId(order.getCorrelationId())
+                .setTenantId(order.getTenantId())
                 .build();
         }
 

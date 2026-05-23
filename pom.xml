@@ -20,6 +20,8 @@
         <module>services/notification-service</module>
         <module>services/web-bff</module>
         <module>services/tenant-service</module>
+        <module>services/api-gateway</module>
+        <module>services/webhook-service</module>
     </modules>
 
     <parent>

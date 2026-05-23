@@ -92,6 +92,14 @@ public class TenantController {
             .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "Tenant not found for slug: " + slug));
     }
 
+    @GetMapping("/by-api-key/{apiKey}")
+    public ResponseEntity<TenantResponse> getByApiKey(@PathVariable String apiKey) {
+        return repository.findByApiKey(apiKey)
+            .filter(t -> t.getStatus() == TenantStatus.ACTIVE)
+            .map(t -> ResponseEntity.ok(TenantResponse.from(t)))
+            .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "No active tenant for key"));
+    }
+
     @PatchMapping("/{id}/suspend")
     public ResponseEntity<TenantResponse> suspend(@PathVariable UUID id) {
         Tenant tenant = repository.findById(id)

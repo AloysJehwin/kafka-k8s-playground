@@ -8,6 +8,7 @@
     {"name": "quantity", "type": "int"},
     {"name": "status", "type": {"type": "enum", "name": "InventoryStatus", "symbols": ["RESERVED", "OUT_OF_STOCK"]}},
     {"name": "reservedAt", "type": {"type": "long", "logicalType": "timestamp-millis"}},
-    {"name": "correlationId", "type": "string"}
+    {"name": "correlationId", "type": "string"},
+    {"name": "tenantId", "type": "string", "default": ""}
   ]
 }

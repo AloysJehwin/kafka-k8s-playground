@@ -1,0 +1,10 @@
+spring:
+  kafka:
+    bootstrap-servers: ${spring.embedded.kafka.brokers:localhost:9092}
+  flyway:
+    enabled: true
+
+eventflow:
+  schema-registry-url: mock://test
+  webhook:
+    retry-interval-ms: 3600000  # disable scheduler during tests

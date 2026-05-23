@@ -46,6 +46,7 @@ public class PaymentTopology {
                 .setAmount(order.getAmount())
                 .setProcessedAt(Instant.now())
                 .setCorrelationId(order.getCorrelationId())
+                .setTenantId(order.getTenantId())
                 .build();
         }, org.apache.kafka.streams.kstream.Named.as("process-payment"));
 

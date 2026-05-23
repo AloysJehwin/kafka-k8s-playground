@@ -48,6 +48,7 @@ public class OrderCompletionTopology {
                     .setReason(reason)
                     .setCompletedAt(Instant.now())
                     .setCorrelationId(payment.getCorrelationId())
+                    .setTenantId(payment.getTenantId())
                     .build();
             },
             JoinWindows.ofTimeDifferenceWithNoGrace(Duration.ofMinutes(5))

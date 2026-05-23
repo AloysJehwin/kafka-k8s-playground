@@ -8,6 +8,7 @@
     {"name": "status", "type": {"type": "enum", "name": "PaymentStatus", "symbols": ["APPROVED", "DECLINED"]}},
     {"name": "amount", "type": {"type": "bytes", "logicalType": "decimal", "precision": 12, "scale": 2}},
     {"name": "processedAt", "type": {"type": "long", "logicalType": "timestamp-millis"}},
-    {"name": "correlationId", "type": "string"}
+    {"name": "correlationId", "type": "string"},
+    {"name": "tenantId", "type": "string", "default": ""}
   ]
 }

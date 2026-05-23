@@ -1,0 +1,33 @@
+server:
+  port: 8091
+
+spring:
+  application:
+    name: webhook-service
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5435/webhooks}
+    username: ${DB_USER:webhook}
+    password: ${DB_PASS:webhook}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+  flyway:
+    enabled: true
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP:localhost:9092}
+
+eventflow:
+  schema-registry-url: ${SCHEMA_REGISTRY_URL:http://localhost:8081}
+  webhook:
+    retry-interval-ms: 30000
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  metrics:
+    export:
+      prometheus:
+        enabled: true
